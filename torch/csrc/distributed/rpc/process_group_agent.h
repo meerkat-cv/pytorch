@@ -66,6 +66,8 @@ class ProcessGroupAgent : public RpcAgent {
 
   void shutdown() override;
 
+  ~ProcessGroupAgent() override;
+
   std::unordered_map<std::string, std::string> getMetrics() override;
   std::unordered_map<std::string, std::string> getDebugInfo() override;
 
@@ -127,6 +129,12 @@ class ProcessGroupAgent : public RpcAgent {
   // compute the remaining time for an RPC, given its end time.
   const std::chrono::milliseconds getRPCRemainingTime(
       const std::chrono::milliseconds& rpcEndTime) const;
+
+  // a helper function to mark a future in the futures_ map with a message. The
+  // future is marked with the passed in message, and then removed from the
+  // futures_ map. It is also removed from the futureTimeouts_ map since these
+  // maps are kept in sync.
+  void markFutureWithMessage(Message& message);
 
   // Note [Termination Detection]
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
