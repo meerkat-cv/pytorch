@@ -2,6 +2,7 @@
 #include <ATen/NativeFunctions.h>
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 #include <cmath>
+#include <cfenv>
 
 /* Fake quantize a tensor, common block for per-channel & per-tensor fake quant
 Args:
@@ -46,6 +47,11 @@ void fake_quantize_grad_slice_cuda(
     int64_t quant_min,
     int64_t quant_max) {
   float inv_scale = 1.0f / scale;
+  std::cout << "cuda scale = " << scale << std::endl;
+  std::cout << "cuda zero_point = " << zero_point << std::endl;
+  std::cout << "cuda quant_min = " << quant_min << std::endl;
+  std::cout << "cuda quant_max = " << quant_max << std::endl;
+  std::cout << "cuda round mode = " << std::fegetround() << std::endl;
   at::cuda::CUDA_tensor_apply3<float, float, float>(
       output_grad,
       input,
@@ -53,6 +59,12 @@ void fake_quantize_grad_slice_cuda(
       [=] __device__(const float& dy, const float& x, float& dx) {
         int64_t Xq = std::nearbyint(x * inv_scale + zero_point);
         dx = (Xq >= quant_min && Xq <= quant_max) * dy;
+        printf("cuda x = %f\n", x);
+        printf("cuda Xq = %f\n", Xq);
+        printf("cuda dx = %f\n", dx);
+        // std::cout << "cuda x = " << x << std::endl;
+        // std::cout << "cuda Xq = " << Xq << std::endl;
+        // std::cout << "cuda dx = " << dx << std::endl;
       });
 }
 
